@@ -1,7 +1,6 @@
 #!/usr/bin/python
 #
 # Script to test access to the Veritas NetBackup AutoSupport CallHome systems
-# Originally bash script from Brady Briggs (AutoSupport DevOps)
 #
 #
 
@@ -15,23 +14,13 @@ log = open('/tmp/chtest_' + str(now) + '.log', 'a')
 
 # Callhome/AutoSupport servers:
 reg = "api.appliance.veritas.com"
-regOld = "api.appliance.symantec.com"
 appmon = "appmon.appliance.veritas.com"
-appmonOld = "appmon-old.appliance.veritas.com"
 telem = "telemetry.veritas.com"
-telemOld = "telemetrics.symantec.com"
 rec = "receiver.appliance.veritas.com"
-sym = "www.symappmon.com"
 
-srchstrngs = (sym, reg, regOld, appmon, appmonOld, telem, telemOld, rec)
+srchstrngs = (reg, appmon, telem, rec)
 
-curlsvrs = (sym, reg, regOld, appmon, appmonOld, telem, telemOld)
-
-
-def spacer():
-    print(' ')
-    print(' ')
-    log.write(' ' + '\n\n')
+curlsvrs = (reg, telem, rec)
 
 
 def selfname():
@@ -193,7 +182,6 @@ def get_callhomesecret():
 
 # Get OS hostname:
 selfname()
-spacer()
 
 # Get mac address for eth0/eth1:
 print('+++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -209,35 +197,26 @@ mac = getHwAddr('eth0')
 print(mac)
 log.write(mac + '\n\n')
 
-spacer()
-
-
 
 # Check /etc/hosts file for presence of callhome/AutoSupport hostnames:
 hostschk()
-spacer()
 
 # Test DNS name resolution for all callhome/AutoSupport hosnames:
 resolve_chk()
-spacer()
 
 # Test SSL connection to the Amazon AWS EC2 hostname
 ssl_ec2_test()
-spacer()
 
 ssl_yhoo_test()
 
-spacer()
-
 # Test curl connection attempts:
 curltest()
-spacer()
 
 trace()
 
 # Gather chinfo and callhome_secret file contents:
 get_chinfo()
-spacer()
+
 get_callhomesecret()
 
 
