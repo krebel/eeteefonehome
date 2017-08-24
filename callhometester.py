@@ -40,15 +40,18 @@ def getHwAddr(ifname):
 def hostschk():
     print('+++++++++++++++++++++++++++++++++++++++++++++++++')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    print("CallHome/AutoSuport servers found in /etc/hosts file, please remove them:")
+    print("/etc/hosts file check")
     print(' ')
-    log.write("CallHome/AutoSuport servers found in /etc/hosts file, please remove them:" + "\n\n")
+    log.write("/etc/hosts file check" + "\n\n")
     hstsFile = open('/etc/hosts', 'r')
     for line in hstsFile:
         for word in srchstrngs:
             if word in line:
                 print(line, end='')
                 log.write(line + '\n\n')
+            else:
+                print("callhome servers do not appear in /etc/hosts.")
+                return()
     hstsFile.close()
 
 
@@ -122,7 +125,7 @@ def curltest():
     print(' ')
     log.write("Curl connection attempts:" + "\n\n")
     for word in curlsvrs:
-        curlem = commands.getoutput('curl -sL -w "%{http_code} (%{url_effective})\\n" http://' + word + ' -o /dev/null')
+        curlem = commands.getoutput('curl --connect-timeout 30 -sL -w "%{http_code} (%{url_effective})\\n" http://' + word + ' -o /dev/null')
         print(curlem)
         log.write(curlem + '\n\n')
         log.write(' ' + '\n\n')
