@@ -148,11 +148,9 @@ def curltest():
 
 def trace():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    print("Traceroute connection attempts:" + '\n\n')
     log.write("Traceroute connection attempts:" + "\n\n")
-    trc = commands.getoutput('traceroute receiver.appliance.veritas.com')
-    print(trc)
-    print(' ' + '\n')
+    trc = commands.getoutput('traceroute -T receiver.appliance.veritas.com')
+    log.write(trc)
     # TODO: read last hostname/ip in traceroute output before triple asterisk, that could be the proxy server
 
 
@@ -200,10 +198,10 @@ if __name__ == '__main__':
     ssl_ec2_test()
     ssl_yhoo_test()
     curltest()
-    trace()
     get_chinfo()
     get_callhomesecret()
     log.close()
     os.remove("/tmp/tmpfile.txt")
     os.remove("/tmp/tmpfile2.txt")
+    trace()
     print('Execution complete! For full output, please see the ' + log.name + ' file.')
