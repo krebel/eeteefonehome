@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Script to test access to the Veritas NetBackup AutoSupport CallHome systems
+# Script to test access to the AutoSupport CallHome systems
 #
 #
 
@@ -25,7 +25,7 @@ curlsvrs = (reg, telem, rec)
 
 def selfname():
     self = commands.getoutput('hostname')
-    print ('OS hostname is: ' + self)
+    print ('OS hostname is: ' + self + '\n\n')
     log.write('OS hostname is: ' + self  + '\n\n')
 
 
@@ -35,14 +35,18 @@ def getHwAddr(ifname):
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 #    return ':'.join(['%02x:' % ord(char) for char in info[18:24]])
 
-
+def printmac():
+    print('MAC address for eth0 is:')
+    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
+    log.write('' + '\n\n')
+    log.write('MAC address for eth0 is:' + '\n\n')
+    mac = getHwAddr('eth0')
+    print(mac)
+    print(' ' + '\n')
+    log.write(mac + '\n\n')
 
 def hostschk():
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    print("/etc/hosts file check")
-    print(' ')
-    log.write("/etc/hosts file check" + "\n\n")
     hstsFile = open('/etc/hosts', 'r')
     for line in hstsFile:
         for word in srchstrngs:
@@ -50,24 +54,38 @@ def hostschk():
                 print(line, end='')
                 log.write(line + '\n\n')
             else:
-                print("callhome servers do not appear in /etc/hosts.")
+                print("callhome servers do not appear in /etc/hosts." + '\n\n')
+                log.write("callhome servers do not appear in /etc/hosts." + "\n\n")
                 return()
     hstsFile.close()
 
 
 
 def resolve_chk():
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
-    print('Testing name resolution for all CallHome/AutoSupport servers:')
+    print('Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('Testing name resolution for all CallHome/AutoSupport servers:')
-    log.write(' ' + '\n\n')
-    print(' ')
+    log.write('Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
     for word in srchstrngs:
-        digem = commands.getoutput('dig +nocmd +nocomments +nostats +noauthority +noquestion ' + word)
+        digem = commands.getoutput('dig +noall +answer ' + word)
         print(digem)
-        log.write(digem + '\n\n')
+        log.write(digem + '\n')
         log.write(' ' + '\n\n')
+    print(' ' + '\n')
+
+def resolv_chk():
+    print('dig reports for all callhome/autosupport servers:' + '\n')
+    for word in srchstrngs:
+        dignfo = commands.getoutput('dig ' + word)
+        answrregex = re.compile(r'ANSWER: \d')
+        hits = answrregex.search(dignfo)
+        answrvalregex = re.compile(r'\d')
+        answrval = answrvalregex.search(hits.group())
+        if (hits.group()) == 'ANSWER: 0':
+            print('DNS has no record of ' + word)
+        else:
+            print('DNS resolved ' + word)
+    print(' ' + '\n\n')
+
 
 
 def ssl_ec2_test():
@@ -78,12 +96,10 @@ def ssl_ec2_test():
     tmpF = open('/tmp/tmpfile.txt', 'r')
     for line in tmpF:
         reverseDig = commands.getoutput('dig +short -x ' + line.strip())
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
-    print('Retrieving Certificate chain')
-    print(' ')
+    print('Retrieving Certificate chain' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('Retrieving Certificate chain' + '\n\n')
-    log.write(' ' + '\n\n')
+    log.write('Retrieving Certificate chain' + '\n')
+    log.write(' ' + '\n')
     sslchain = commands.getoutput('echo QUIT | openssl s_client -connect ' + reverseDig.rstrip('.') + ':443')
     log.write(sslchain + '\n\n')
     tmpF2= open('/tmp/tmpfile2.txt', 'w')
@@ -93,13 +109,12 @@ def ssl_ec2_test():
     for line in tmpF2:
         if re.search('s:|:i', line):
             print(line)
+    print(' ' + '\n')
     tmpF2.close()
 
 
 def ssl_yhoo_test():
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
-    print('Retrieving www.yahoo.com Certificate chain')
-    print(' ')
+    print('Retrieving www.yahoo.com Certificate chain' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('Retrieving www.yahoo.com Certificate chain' + '\n\n')
     log.write(' ' + '\n\n')
@@ -112,6 +127,7 @@ def ssl_yhoo_test():
     for line in tmpF2:
         if re.search('s:|:i', line):
             print(line)
+    print(' ' + '\n')
     tmpF2.close()
 
 
@@ -119,40 +135,35 @@ def ssl_yhoo_test():
 
 
 def curltest():
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    print("Curl connection attempts:")
-    print(' ')
-    log.write("Curl connection attempts:" + "\n\n")
+    print("Curl connection attempts:" + '\n')
+    log.write("Curl connection attempts:" + "\n")
     for word in curlsvrs:
         curlem = commands.getoutput('curl --connect-timeout 30 -sL -w "%{http_code} (%{url_effective})\\n" http://' + word + ' -o /dev/null')
         print(curlem)
         log.write(curlem + '\n\n')
         log.write(' ' + '\n\n')
-    print('Following http codes considered normal: 200 = OK, 401 = Authorization Required, 403 = Forbidden')
+    print('Note: HTTP codes considered as normal: 200 = OK, 401 = Authorization Required, 403 = Forbidden' + '\n\n')
+    print(' ' + '\n')
 
 def trace():
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    print("Traceroute connection attempts:")
-    print(' ')
+    print("Traceroute connection attempts:" + '\n\n')
     log.write("Traceroute connection attempts:" + "\n\n")
     trc = commands.getoutput('traceroute receiver.appliance.veritas.com')
     print(trc)
+    print(' ' + '\n')
     # TODO: read last hostname/ip in traceroute output before triple asterisk, that could be the proxy server
 
 
 def get_chinfo():
-    print('+++++++++++++++++++++++++++++++++++++++++++++++++')
-    print('Gathering chinfo.txt and callhome_secret')
-    print(' ')
+    print('Gathering chinfo.txt and callhome_secret' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('' + '\n\n')
     log.write('Gathering chinfo.txt and callhome_secret' + '\n\n')
-    print('/usr/openv/runtime_data/chinfo.txt contains:')
+    print('/usr/openv/runtime_data/chinfo.txt contains:' + '\n')
     if os.path.exists('/usr/openv/runtime_data/chinfo.txt'):
         chConf = open('/usr/openv/runtime_data/chinfo.txt', "r")
-        chConf = open('/usr/openv/runtime_data/chinfo.txt', 'r')
         chConfgutz = chConf.read()
         log.write('/usr/openv/runtime_data/chinfo.txt contains:' + '\n\n')
         log.write(chConfgutz + '\n\n')
@@ -160,12 +171,11 @@ def get_chinfo():
         chConf.close()
 #except IOError:
     else:
-        print ("----- Could not locate /usr/openv/runtime_data/chinfo.txt file - aborting")
-        log.write('----- Could not locate /usr/openv/runtime_data/chinfo.txt file - aborting')
+        print ("----- Could not locate /usr/openv/runtime_data/chinfo.txt file - aborting" + '\n')
+        log.write('----- Could not locate /usr/openv/runtime_data/chinfo.txt file - aborting' + '\n\n')
 
 
 def get_callhomesecret():
-    print('+++++++++++++++++++')
     print('/usr/openv/runtime_data/callhome_secret contains:')
     if os.path.exists('/usr/openv/runtime_data/callhome_secret'):
         chsecrt = open('/usr/openv/runtime_data/callhome_secret', 'r')
@@ -176,54 +186,24 @@ def get_callhomesecret():
         chsecrt.close()
 #except IOError:
     else:
-        print ("----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting")
-        log.write('----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting')
+        print ("----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting" + '\n')
+        log.write('----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting' + '\n\n')
+    print(' ' + '\n')
 
 
 
 #### Main section
-
-# Get OS hostname:
-selfname()
-
-# Get mac address for eth0/eth1:
-print('+++++++++++++++++++++++++++++++++++++++++++++++++')
-print('MAC address for eth0 is:')
-#print getHwAddr('eth0')
-#print getHwAddr('eth1')
-log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-log.write('' + '\n\n')
-log.write('MAC address for eth0 is:' + '\n\n')
-#log.write(getHwAddr('eth0'))
-#log.write(getHwAddr('eth1'))
-mac = getHwAddr('eth0')
-print(mac)
-log.write(mac + '\n\n')
-
-
-# Check /etc/hosts file for presence of callhome/AutoSupport hostnames:
-hostschk()
-
-# Test DNS name resolution for all callhome/AutoSupport hosnames:
-resolve_chk()
-
-# Test SSL connection to the Amazon AWS EC2 hostname
-ssl_ec2_test()
-
-ssl_yhoo_test()
-
-# Test curl connection attempts:
-curltest()
-
-trace()
-
-# Gather chinfo and callhome_secret file contents:
-get_chinfo()
-
-get_callhomesecret()
-
-
-# clean up:
-log.close()
-os.remove("/tmp/tmpfile.txt")
-os.remove("/tmp/tmpfile2.txt")
+if __name__ == '__main__':
+    selfname()
+    printmac()
+    hostschk()
+    ssl_ec2_test()
+    ssl_yhoo_test()
+    curltest()
+    trace()
+    get_chinfo()
+    get_callhomesecret()
+    log.close()
+    os.remove("/tmp/tmpfile.txt")
+    os.remove("/tmp/tmpfile2.txt")
+    print('Execution complete! For full output, please see the ' + log.name + ' file.')
