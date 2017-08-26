@@ -2,26 +2,20 @@
 #
 # Script to test access to the AutoSupport CallHome systems
 #
-#
 
 from __future__ import print_function
 import os, sys, commands, re, time, socket, fcntl, struct
 
-
 now = time.strftime('%Y-%m-%d_%H-%M-%S')
-
 log = open('/tmp/chtest_' + str(now) + '.log', 'a')
 
 # Callhome/AutoSupport servers:
 reg = "api.appliance.veritas.com"
-appmon = "appmon.appliance.veritas.com"
 telem = "telemetry.veritas.com"
 rec = "receiver.appliance.veritas.com"
 
-srchstrngs = (reg, appmon, telem, rec)
-
-curlsvrs = (reg, telem, rec)
-
+srchstrngs = (reg, telem, rec)
+curlsvrs = (reg, telem)
 
 def selfname():
     self = commands.getoutput('hostname')
@@ -33,7 +27,6 @@ def getHwAddr(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
-#    return ':'.join(['%02x:' % ord(char) for char in info[18:24]])
 
 def printmac():
     print('MAC address for eth0 is:')
@@ -89,7 +82,7 @@ def resolv_chk():
 
 
 def ssl_ec2_test():
-    appmonips = commands.getoutput('dig +short ' + appmon)
+    appmonips = commands.getoutput('dig +short ' + reg)
     tmpF = open('/tmp/tmpfile.txt', 'a')
     tmpF.write(appmonips)
     tmpF.close()
@@ -130,10 +123,6 @@ def ssl_yhoo_test():
     print(' ' + '\n')
     tmpF2.close()
 
-
-
-
-
 def curltest():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     print("Curl connection attempts:" + '\n')
@@ -145,6 +134,22 @@ def curltest():
         log.write(' ' + '\n\n')
     print('Note: HTTP codes considered as normal: 200 = OK, 401 = Authorization Required, 403 = Forbidden' + '\n\n')
     print(' ' + '\n')
+
+def w3mit():
+    blnk = ''
+    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
+    print("w3m test" + '\n')
+    log.write("w3m test" + '\n')
+    w3mout = commands.getoutput('w3m -dump https://receiver.appliance.veritas.com')
+    if w3mout == blnk:
+        print("Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
+        log.write("Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
+    else:
+        print("Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n')
+        log.write("Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n\n')
+        log.write(w3mout)
+        log.write(' ' + '\n')
+
 
 def trace():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
@@ -198,6 +203,7 @@ if __name__ == '__main__':
     ssl_ec2_test()
     ssl_yhoo_test()
     curltest()
+    w3mit()
     get_chinfo()
     get_callhomesecret()
     trace()
