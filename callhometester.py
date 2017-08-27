@@ -17,20 +17,31 @@ rec = "receiver.appliance.veritas.com"
 srchstrngs = (reg, telem, rec)
 curlsvrs = (reg, telem)
 
+# First check if basic DNS connectivity exists. If not, exit completely out w/warning/homework.
+def dnsordie():
+    for word in srchstrngs:
+        diginfo = commands.getoutput('dig +time=1 +tries=1 +retry=1 ' + word)
+        if 'no servers could be reached' in diginfo:
+            print('A DNS server is either unconfigured or unreachable on this appliance. Please configure a working DNS server.')
+            print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required.' + '\n')
+            exit()
+        else:
+            continue
+
 def selfname():
     self = commands.getoutput('hostname')
-    print ('\n' + 'OS hostname is: ' + self + '\n')
+    print ('\n' + 'OS hostname is: ' + self + '\n\n')
     log.write('OS hostname is: ' + self  + '\n\n')
 
 
-def getHwAddr(ifname):
+def gethwaddr(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 def printmac():
-    mac = getHwAddr('eth0')
-    print('1) MAC address for eth0 is: ' + mac + '\n')
+    mac = gethwaddr('eth0')
+    print('1) MAC address for eth0 is: ' + mac + '\n\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('' + '\n\n')
     log.write('1) MAC address for eth0 is:' + mac + '\n\n')
@@ -42,14 +53,13 @@ def hostschk():
         for word in srchstrngs:
             if word in line:
                 print('2) ' + line, end='')
-                print("Please remove all references to Callhome/Autosupport servers from the /etc/hosts file.")
+                print("Please remove all references to Callhome/Autosupport servers from the /etc/hosts file." + '\n')
                 log.write('2' + line + '\n\n')
             else:
-                print("2) callhome servers do not appear in /etc/hosts. (Good!)" + '\n')
+                print("2) callhome servers do not appear in /etc/hosts. (Good!)" + '\n\n')
                 log.write("2) callhome servers do not appear in /etc/hosts. (Good!)" + "\n\n")
                 return()
     hstsFile.close()
-
 
 
 def resolve_chk():
@@ -89,9 +99,9 @@ def ssl_ec2_test():
     tmpF = open('/tmp/tmpfile.txt', 'r')
     for line in tmpF:
         reverseDig = commands.getoutput('dig +short -x ' + line.strip())
-    print('4) Retrieving Certificate chain' + '\n')
+    print('4) Retrieving Certificate chain:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('4) Retrieving Certificate chain' + '\n')
+    log.write('4) Retrieving Certificate chain:' + '\n')
     log.write(' ' + '\n')
     sslchain = commands.getoutput('echo QUIT | openssl s_client -connect ' + reverseDig.rstrip('.') + ':443')
     log.write(sslchain + '\n\n')
@@ -107,9 +117,9 @@ def ssl_ec2_test():
 
 
 def ssl_yhoo_test():
-    print('5) Retrieving www.yahoo.com Certificate chain' + '\n')
+    print('5) Retrieving www.yahoo.com Certificate chain:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('5) Retrieving www.yahoo.com Certificate chain' + '\n\n')
+    log.write('5) Retrieving www.yahoo.com Certificate chain:' + '\n\n')
     log.write(' ' + '\n\n')
     yahoosslchain = commands.getoutput('echo QUIT | openssl s_client -connect www.yahoo.com:443')
     log.write(yahoosslchain + '\n\n')
@@ -144,7 +154,7 @@ def w3mit():
         print("7) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
         log.write("7) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
     else:
-        print("7) Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n')
+        print("7) Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n\n')
         log.write("7) Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n\n')
         log.write(w3mout)
         log.write(' ' + '\n')
@@ -159,10 +169,10 @@ def trace():
 
 
 def get_chinfo():
-    print('8) Gathering chinfo.txt and callhome_secret' + '\n')
+    print('8) Gathering chinfo.txt and callhome_secret:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('' + '\n\n')
-    log.write('9) Gathering chinfo.txt and callhome_secret' + '\n\n')
+    log.write('9) Gathering chinfo.txt and callhome_secret:' + '\n\n')
     print('/usr/openv/runtime_data/chinfo.txt contains:' + '\n')
     if os.path.exists('/usr/openv/runtime_data/chinfo.txt'):
         chConf = open('/usr/openv/runtime_data/chinfo.txt', "r")
@@ -194,20 +204,12 @@ def get_callhomesecret():
     print(' ' + '\n')
 
 
-
-#### Main section
+# Main section
 if __name__ == '__main__':
+    dnsordie()
     selfname()
     printmac()
     hostschk()
-# First check if basic DNS connectivity exists. If not, exit completely out w/warning/homework.
-for word in srchstrngs:
-    diginfo = commands.getoutput('dig +time=1 +tries=1 +retry=1 ' + word)
-    if 'no servers could be reached' in diginfo:
-        print('A DNS server is either unconfigured or unreachable on this appliance. Please configure a working DNS server.')
-        print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required.')
-        break
-
     resolv_chk()
     ssl_ec2_test()
     ssl_yhoo_test()
