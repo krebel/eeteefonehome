@@ -42,10 +42,11 @@ def hostschk():
         for word in srchstrngs:
             if word in line:
                 print('2) ' + line, end='')
+                print("Please remove all references to Callhome/Autosupport servers from the /etc/hosts file.")
                 log.write('2' + line + '\n\n')
             else:
-                print("2) callhome servers do not appear in /etc/hosts." + '\n')
-                log.write("2) callhome servers do not appear in /etc/hosts." + "\n\n")
+                print("2) callhome servers do not appear in /etc/hosts. (Good!)" + '\n')
+                log.write("2) callhome servers do not appear in /etc/hosts. (Good!)" + "\n\n")
                 return()
     hstsFile.close()
 
@@ -73,7 +74,7 @@ def resolv_chk():
         answrvalregex = re.compile(r'\d')
         answrval = answrvalregex.search(hits.group())
         if (hits.group()) == 'ANSWER: 0':
-            print('DNS has no record of ' + word)
+            print('DNS has no record of ' + word + '\n' + 'Please ensure the appliance can query DNS for all Callhome/Autosupport server records.')
         else:
             print('DNS resolved ' + word)
     print(' ' + '\n')
@@ -199,6 +200,14 @@ if __name__ == '__main__':
     selfname()
     printmac()
     hostschk()
+# First check if basic DNS connectivity exists. If not, exit completely out w/warning/homework.
+for word in srchstrngs:
+    diginfo = commands.getoutput('dig +time=1 +tries=1 +retry=1 ' + word)
+    if 'no servers could be reached' in diginfo:
+        print('A DNS server is either unconfigured or unreachable on this appliance. Please configure a working DNS server.')
+        print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required.')
+        break
+
     resolv_chk()
     ssl_ec2_test()
     ssl_yhoo_test()
