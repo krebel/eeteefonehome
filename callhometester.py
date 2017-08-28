@@ -17,7 +17,7 @@ rec = "receiver.appliance.veritas.com"
 srchstrngs = (reg, telem, rec)
 curlsvrs = (reg, telem)
 
-# First check if basic DNS connectivity exists. If not, exit completely out w/warning/homework.
+# First check if basic DNS connectivity exists. If not, exit completely w/warning/homework.
 def dnsordie():
     for word in srchstrngs:
         diginfo = commands.getoutput('dig +time=1 +tries=1 +retry=1 ' + word)
@@ -88,8 +88,6 @@ def resolv_chk():
         else:
             print('DNS resolved ' + word)
     print(' ' + '\n')
-
-
 
 def ssl_ec2_test():
     appmonips = commands.getoutput('dig +short ' + reg)
