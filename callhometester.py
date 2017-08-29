@@ -17,17 +17,21 @@ rec = "receiver.appliance.veritas.com"
 srchstrngs = (reg, telem, rec)
 curlsvrs = (reg, telem)
 
+def homework():
+    print("Please see the following KB articles:" + '\n')
+    print("Veritas AutoSupport infrastructure update for Call Home endpoints")
+    print("https://www.veritas.com/support/en_US/article.000126756" + '\n')
+    print("Understanding the Call Home workflow for a NetBackup Appliance")
+    print("https://www.veritas.com/support/en_US/article.000115419" + '\n')
+
 # First check if basic DNS connectivity exists. If not, exit completely w/warning/homework.
 def dnsordie():
     for word in srchstrngs:
         diginfo = commands.getoutput('dig +time=1 +tries=1 +retry=1 ' + word)
         if 'no servers could be reached' in diginfo:
             print('A DNS server is either unconfigured or unreachable on this appliance. Please configure a working DNS server.' + '\n')
-            print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required. Please see the following KB articles:' + '\n')
-            print("Veritas AutoSupport infrastructure update for Call Home endpoints")
-            print("https://www.veritas.com/support/en_US/article.000126756" + '\n')
-            print("Understanding the Call Home workflow for a NetBackup Appliance")
-            print("https://www.veritas.com/support/en_US/article.000115419" + '\n')
+            print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required.' + '\n')
+            homework()
             exit()
         else:
             continue
@@ -43,11 +47,7 @@ def w3mit():
     else:
         print("Appliance unable to connect to receiver.appliance.veritas.com on TCP port 443.")
         print("This may mean that there is a routing problem, or a router, proxy server, firewall or other network device preventing connectivity.")
-        print("Please see the following KB articles:" + '\n')
-        print("Veritas AutoSupport infrastructure update for Call Home endpoints")
-        print("https://www.veritas.com/support/en_US/article.000126756" + '\n')
-        print("Understanding the Call Home workflow for a NetBackup Appliance")
-        print("https://www.veritas.com/support/en_US/article.000115419" + '\n')
+        homework()
         exit()
 
 def selfname():
@@ -62,7 +62,7 @@ def gethwaddr(ifname):
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 def printmac():
-    mac = gethwaddr('enp0s3')
+    mac = gethwaddr('eth0')
     print('2) MAC address for eth0 is: ' + mac + '\n\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('' + '\n\n')
@@ -77,6 +77,7 @@ def hostschk():
             if word in line:
                 print('3) ' + line, end='')
                 print("Please remove all references to Callhome/Autosupport servers from the /etc/hosts file." + '\n')
+                homework()
                 log.write('3' + line + '\n\n')
             else:
                 print("3) callhome servers do not appear in /etc/hosts. (Good!)" + '\n\n')
@@ -96,7 +97,8 @@ def resolv_chk():
         answrvalregex = re.compile(r'\d')
         answrval = answrvalregex.search(hits.group())
         if (hits.group()) == 'ANSWER: 0':
-            print('DNS has no record of ' + word + '\n' + 'Please ensure the appliance can query DNS for all Callhome/Autosupport server records.')
+            print('DNS has no record of ' + word + '\n' + 'Please ensure the appliance can query DNS for all Callhome/Autosupport server records.' + '\n')
+            homework()
         else:
             print('DNS resolved ' + word)
     print(' ' + '\n')
@@ -220,3 +222,4 @@ if __name__ == '__main__':
     os.remove("/tmp/tmpfile.txt")
     os.remove("/tmp/tmpfile2.txt")
     print('Execution complete! For full output, please see the ' + log.name + ' file.')
+
