@@ -22,11 +22,32 @@ def dnsordie():
     for word in srchstrngs:
         diginfo = commands.getoutput('dig +time=1 +tries=1 +retry=1 ' + word)
         if 'no servers could be reached' in diginfo:
-            print('A DNS server is either unconfigured or unreachable on this appliance. Please configure a working DNS server.')
-            print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required.' + '\n')
+            print('A DNS server is either unconfigured or unreachable on this appliance. Please configure a working DNS server.' + '\n')
+            print('Note: Callhome/Autosupport servers use dynamic IP addresses that change frequently. DNS hostname resolution is required. Please see the following KB articles:' + '\n')
+            print("Veritas AutoSupport infrastructure update for Call Home endpoints")
+            print("https://www.veritas.com/support/en_US/article.000126756" + '\n')
+            print("Understanding the Call Home workflow for a NetBackup Appliance")
+            print("https://www.veritas.com/support/en_US/article.000115419" + '\n')
             exit()
         else:
             continue
+
+def w3mit():
+    blnk = ''
+    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
+    w3mout = commands.getoutput('w3m -dump https://receiver.appliance.veritas.com')
+    if w3mout == blnk:
+        print("1) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
+        log.write("1) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
+    else:
+        print("Appliance unable to connect to receiver.appliance.veritas.com on TCP port 443.")
+        print("This may mean that there is a routing problem, or a router, proxy server, firewall or other network device preventing connectivity.")
+        print("Please see the following KB articles:" + '\n')
+        print("Veritas AutoSupport infrastructure update for Call Home endpoints")
+        print("https://www.veritas.com/support/en_US/article.000126756" + '\n')
+        print("Understanding the Call Home workflow for a NetBackup Appliance")
+        print("https://www.veritas.com/support/en_US/article.000115419" + '\n')
+        exit()
 
 def selfname():
     self = commands.getoutput('hostname')
@@ -40,11 +61,11 @@ def gethwaddr(ifname):
     return ''.join(['%02x:' % ord(char) for char in info[18:24]])[:-1]
 
 def printmac():
-    mac = gethwaddr('eth0')
-    print('1) MAC address for eth0 is: ' + mac + '\n\n')
+    mac = gethwaddr('enp0s3')
+    print('2) MAC address for eth0 is: ' + mac + '\n\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('' + '\n\n')
-    log.write('1) MAC address for eth0 is:' + mac + '\n\n')
+    log.write('2) MAC address for eth0 is:' + mac + '\n\n')
 
 def hostschk():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
@@ -52,15 +73,14 @@ def hostschk():
     for line in hstsFile:
         for word in srchstrngs:
             if word in line:
-                print('2) ' + line, end='')
+                print('3) ' + line, end='')
                 print("Please remove all references to Callhome/Autosupport servers from the /etc/hosts file." + '\n')
-                log.write('2' + line + '\n\n')
+                log.write('3' + line + '\n\n')
             else:
-                print("2) callhome servers do not appear in /etc/hosts. (Good!)" + '\n\n')
-                log.write("2) callhome servers do not appear in /etc/hosts. (Good!)" + "\n\n")
+                print("3) callhome servers do not appear in /etc/hosts. (Good!)" + '\n\n')
+                log.write("3) callhome servers do not appear in /etc/hosts. (Good!)" + "\n\n")
                 return()
     hstsFile.close()
-
 
 def resolve_chk():
     print('Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
@@ -74,9 +94,9 @@ def resolve_chk():
     print(' ' + '\n')
 
 def resolv_chk():
-    print('3) Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
+    print('4) Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('3) Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
+    log.write('4) Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
     for word in srchstrngs:
         dignfo = commands.getoutput('dig ' + word)
         answrregex = re.compile(r'ANSWER: \d')
@@ -97,9 +117,9 @@ def ssl_ec2_test():
     tmpF = open('/tmp/tmpfile.txt', 'r')
     for line in tmpF:
         reverseDig = commands.getoutput('dig +short -x ' + line.strip())
-    print('4) Retrieving Certificate chain:' + '\n')
+    print('5) Retrieving Certificate chain:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('4) Retrieving Certificate chain:' + '\n')
+    log.write('5) Retrieving Certificate chain:' + '\n')
     log.write(' ' + '\n')
     sslchain = commands.getoutput('echo QUIT | openssl s_client -connect ' + reverseDig.rstrip('.') + ':443')
     log.write(sslchain + '\n\n')
@@ -115,9 +135,9 @@ def ssl_ec2_test():
 
 
 def ssl_yhoo_test():
-    print('5) Retrieving www.yahoo.com Certificate chain:' + '\n')
+    print('6) Retrieving www.yahoo.com Certificate chain:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('5) Retrieving www.yahoo.com Certificate chain:' + '\n\n')
+    log.write('6) Retrieving www.yahoo.com Certificate chain:' + '\n\n')
     log.write(' ' + '\n\n')
     yahoosslchain = commands.getoutput('echo QUIT | openssl s_client -connect www.yahoo.com:443')
     log.write(yahoosslchain + '\n\n')
@@ -134,7 +154,7 @@ def ssl_yhoo_test():
 
 def curltest():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    print("6) Curl connection attempts:" + '\n')
+    print("7) Curl connection attempts:" + '\n')
     log.write("Curl connection attempts:" + "\n")
     for word in curlsvrs:
         curlem = commands.getoutput('curl --connect-timeout 30 -sL -w "%{http_code} (%{url_effective})\\n" http://' + word + ' -o /dev/null')
@@ -144,23 +164,9 @@ def curltest():
     print('Note: HTTP codes considered as normal: 200 = OK, 401 = Authorization Required, 403 = Forbidden' + '\n\n')
     print(' ' + '\n')
 
-def w3mit():
-    blnk = ''
-    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    w3mout = commands.getoutput('w3m -dump https://receiver.appliance.veritas.com')
-    if w3mout == blnk:
-        print("7) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
-        log.write("7) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
-    else:
-        print("7) Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n\n')
-        log.write("7) Appliance unable to connect directly to receiver.appliance.veritas.com...there may be a proxy server." + '\n\n')
-        log.write(w3mout)
-        log.write(' ' + '\n')
-
-
 def trace():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write("8) Traceroute connection attempts:" + "\n\n")
+    log.write("Traceroute connection attempts:" + "\n\n")
     trc = commands.getoutput('traceroute -T receiver.appliance.veritas.com')
     log.write(trc)
     # TODO: read last hostname/ip in traceroute output before triple asterisk, that could be the proxy server
@@ -170,7 +176,7 @@ def get_chinfo():
     print('8) Gathering chinfo.txt and callhome_secret:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write('' + '\n\n')
-    log.write('9) Gathering chinfo.txt and callhome_secret:' + '\n\n')
+    log.write('8) Gathering chinfo.txt and callhome_secret:' + '\n\n')
     print('/usr/openv/runtime_data/chinfo.txt contains:' + '\n')
     if os.path.exists('/usr/openv/runtime_data/chinfo.txt'):
         chConf = open('/usr/openv/runtime_data/chinfo.txt', "r")
@@ -191,7 +197,7 @@ def get_callhomesecret():
         chsecrt = open('/usr/openv/runtime_data/callhome_secret', 'r')
         chsecrtgutz = chsecrt.read()
         log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-        log.write('10) /usr/openv/runtime_data/callhome_secret contains:')
+        log.write('9) /usr/openv/runtime_data/callhome_secret contains:')
         log.write(chsecrtgutz + '\n\n')
         print(chsecrtgutz)
         chsecrt.close()
@@ -205,6 +211,7 @@ def get_callhomesecret():
 # Main section
 if __name__ == '__main__':
     dnsordie()
+    w3mit()
     selfname()
     printmac()
     hostschk()
@@ -212,7 +219,6 @@ if __name__ == '__main__':
     ssl_ec2_test()
     ssl_yhoo_test()
     curltest()
-    w3mit()
     get_chinfo()
     get_callhomesecret()
     trace()
