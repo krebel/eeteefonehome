@@ -32,6 +32,7 @@ def dnsordie():
         else:
             continue
 
+# Second, if we cannot connect to port 443 on receiver.appliance.veritas.com, exit completely w/warning.
 def w3mit():
     blnk = ''
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
@@ -54,7 +55,7 @@ def selfname():
     print ('\n' + 'OS hostname is: ' + self + '\n\n')
     log.write('OS hostname is: ' + self  + '\n\n')
 
-
+# Next two functions get the eth1 mac. TODO: make this a single smaller function.
 def gethwaddr(ifname):
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     info = fcntl.ioctl(s.fileno(), 0x8927,  struct.pack('256s', ifname[:15]))
@@ -67,6 +68,7 @@ def printmac():
     log.write('' + '\n\n')
     log.write('2) MAC address for eth0 is:' + mac + '\n\n')
 
+# Check for callhome servers in hosts file which we do not want.
 def hostschk():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     hstsFile = open('/etc/hosts', 'r')
@@ -82,17 +84,7 @@ def hostschk():
                 return()
     hstsFile.close()
 
-def resolve_chk():
-    print('Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
-    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
-    for word in srchstrngs:
-        digem = commands.getoutput('dig +noall +answer ' + word)
-        print(digem)
-        log.write(digem + '\n')
-        log.write(' ' + '\n\n')
-    print(' ' + '\n')
-
+# A DNS server is reachable, so lets test name resolution and print out results to screen/log:
 def resolv_chk():
     print('4) Testing name resolution for all CallHome/AutoSupport servers:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
@@ -109,6 +101,7 @@ def resolv_chk():
             print('DNS resolved ' + word)
     print(' ' + '\n')
 
+# Grab the SSL certificate chain.
 def ssl_ec2_test():
     appmonips = commands.getoutput('dig +short ' + reg)
     tmpF = open('/tmp/tmpfile.txt', 'a')
@@ -133,7 +126,7 @@ def ssl_ec2_test():
     print(' ' + '\n')
     tmpF2.close()
 
-
+# Can probably pull this out, but it's nice-to-have proof that we cannot make a SSL socket to anything.
 def ssl_yhoo_test():
     print('6) Retrieving www.yahoo.com Certificate chain:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
@@ -152,6 +145,7 @@ def ssl_yhoo_test():
     log.write("Note: if we cannot connect to yahoo.com port 443, then there is definitely something on the network preventing it." + '\n\n')
     tmpF2.close()
 
+# Curl test, can we connect directly to callhome/autosupport servers:
 def curltest():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     print("7) Curl connection attempts:" + '\n')
@@ -164,6 +158,7 @@ def curltest():
     print('Note: HTTP codes considered as normal: 200 = OK, 401 = Authorization Required, 403 = Forbidden' + '\n\n')
     print(' ' + '\n')
 
+# Grab traceroute results to log file.
 def trace():
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
     log.write("Traceroute connection attempts:" + "\n\n")
@@ -171,7 +166,7 @@ def trace():
     log.write(trc)
     # TODO: read last hostname/ip in traceroute output before triple asterisk, that could be the proxy server
 
-
+# Next two functions pull the chinfo data. TODO: determine NBAPP version and pull this from proper path.
 def get_chinfo():
     print('8) Gathering chinfo.txt and callhome_secret:' + '\n')
     log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
@@ -189,7 +184,6 @@ def get_chinfo():
     else:
         print ("----- Could not locate /usr/openv/runtime_data/chinfo.txt file - aborting" + '\n')
         log.write('----- Could not locate /usr/openv/runtime_data/chinfo.txt file - aborting' + '\n\n')
-
 
 def get_callhomesecret():
     print('9) /usr/openv/runtime_data/callhome_secret contains:')
