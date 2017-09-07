@@ -3,6 +3,8 @@
 # Script to test access to the AutoSupport CallHome systems.
 #
 
+__author__ = 'krebel'
+
 from __future__ import print_function
 import os, sys, commands, re, time, socket, fcntl, struct
 
