@@ -25,4 +25,5 @@ Callhome proxy enable fails with "unable to find valid certification path to req
 https://www.veritas.com/support/en_US/article.000107917
 
 TODO:
+- **Update to handle higher nbapp versions!
 - Research proxy server detection (telnet -T? nmap?)
