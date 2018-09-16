@@ -3,10 +3,10 @@
 # Script to test access to the AutoSupport CallHome systems.
 #
 
-__author__ = 'krebel'
-
 from __future__ import print_function
 import os, sys, commands, re, time, socket, fcntl, struct
+
+__author__ = 'krebel'
 
 now = time.strftime('%Y-%m-%d_%H-%M-%S')
 log = open('/tmp/chtest_' + str(now) + '.log', 'a')
@@ -15,9 +15,10 @@ log = open('/tmp/chtest_' + str(now) + '.log', 'a')
 reg = "api.appliance.veritas.com"
 telem = "telemetry.veritas.com"
 rec = "receiver.appliance.veritas.com"
+mon = "appmon.appliance.veritas.com"
 
-srchstrngs = (reg, telem, rec)
-curlsvrs = (reg, telem)
+srchstrngs = (reg, telem, rec, mon)
+curlsvrs = (reg, telem, mon)
 
 def homework():
     print("Please see the following KB articles:" + '\n')
@@ -38,19 +39,6 @@ def dnsordie():
         else:
             continue
 
-# Second, if we cannot connect to port 443 on receiver.appliance.veritas.com, exit completely w/warning.
-def w3mit():
-    blnk = ''
-    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    w3mout = commands.getoutput('w3m -dump https://receiver.appliance.veritas.com')
-    if w3mout == blnk:
-        print("1) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
-        log.write("1) Appliance successfully connects directly to receiver.appliance.veritas.com" + '\n\n')
-    else:
-        print("Appliance unable to connect to receiver.appliance.veritas.com on TCP port 443.")
-        print("This may mean that there is a routing problem, or a router, proxy server, firewall or other network device preventing connectivity.")
-        homework()
-        exit()
 
 def selfname():
     self = commands.getoutput('hostname')
@@ -130,24 +118,6 @@ def ssl_ec2_test():
     print(' ' + '\n')
     tmpF2.close()
 
-# Can probably pull this out, but it's nice-to-have proof that we cannot make a SSL socket to anything.
-def ssl_yhoo_test():
-    print('6) Retrieving www.yahoo.com Certificate chain:' + '\n')
-    log.write('+++++++++++++++++++++++++++++++++++++++++++++++++' + '\n\n')
-    log.write('6) Retrieving www.yahoo.com Certificate chain:' + '\n\n')
-    log.write(' ' + '\n\n')
-    yahoosslchain = commands.getoutput('echo QUIT | openssl s_client -connect www.yahoo.com:443')
-    log.write(yahoosslchain + '\n\n')
-    tmpF2= open('/tmp/tmpfile2.txt', 'w')
-    tmpF2.write(yahoosslchain)
-    tmpF2.close()
-    tmpF2= open('/tmp/tmpfile2.txt', 'r')
-    for line in tmpF2:
-        if re.search('s:|:i', line):
-            print(line)
-    print("Note: if we cannot connect to yahoo.com port 443, then there is definitely something on the network preventing it." + '\n\n')
-    log.write("Note: if we cannot connect to yahoo.com port 443, then there is definitely something on the network preventing it." + '\n\n')
-    tmpF2.close()
 
 # Curl test, can we connect directly to callhome/autosupport servers:
 def curltest():
@@ -201,21 +171,21 @@ def get_callhomesecret():
         chsecrt.close()
 #except IOError:
     else:
-        print ("----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting" + '\n')
+        print("----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting" + '\n')
+        print("Please follow 'TSE Initiates Provisioning' section of internal KB 100038261" + '\n')
         log.write('----- Could not locate /usr/openv/runtime_data/callhome_secret file - aborting' + '\n\n')
+        log.write("Please follow 'TSE Initiates Provisioning' section of internal KB 100038261" + '\n\n')
     print(' ' + '\n')
 
 
 # Main section
 if __name__ == '__main__':
     dnsordie()
-    w3mit()
     selfname()
     printmac()
     hostschk()
     resolv_chk()
     ssl_ec2_test()
-    ssl_yhoo_test()
     curltest()
     get_chinfo()
     get_callhomesecret()
@@ -224,4 +194,3 @@ if __name__ == '__main__':
     os.remove("/tmp/tmpfile.txt")
     os.remove("/tmp/tmpfile2.txt")
     print('Execution complete! For full output, please see the ' + log.name + ' file.')
-
